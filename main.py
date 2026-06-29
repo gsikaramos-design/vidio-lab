@@ -256,16 +256,42 @@ JOBS_LOCK = threading.Lock()
 # 5. Processing pipeline
 # --------------------------------------------------------------------------------------
 
-def _run(cmd: list[str], on_line=None) -> int:
+
+    
+    
+    def _run(cmd: list[str]) -> int:
     log.info("$ %s", " ".join(str(c) for c in cmd))
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True
+    )
+
     assert proc.stdout
+
+    output = []
+
     for line in proc.stdout:
         line = line.rstrip()
-        if on_line:
-            on_line(line)
+        output.append(line)
+        log.info(line)
+
     proc.wait()
-    return proc.returncode
+
+    if proc.returncode != 0:
+        raise RuntimeError(
+            "FFmpeg failed:\n" + "\n".join(output[-100:])
+        )
+
+    return 0
+    
+        
+        
+            
+    
+    
 
 
 def process_job(job: Job) -> None:
